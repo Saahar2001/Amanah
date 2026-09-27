@@ -1,0 +1,14 @@
+.worktrees/
+.superpowers/
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+checkpoints/
+artifacts/
+data/private/
+data/reference_store.json
+*.pt
+*.bin
+*.safetensors
+*.zip

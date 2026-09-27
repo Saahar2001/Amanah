@@ -1,0 +1,31 @@
+name: AMANAH QA
+
+on:
+  push:
+    branches: [main, "feat/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Unit and contract tests
+        run: pytest -q
+      - name: Training architecture smoke
+        run: python -m training.train --smoke
+      - name: Python compile check
+        run: python -m compileall -q amanah_engine api data training scripts deployment
+      - name: Upstream source contract smoke
+        run: python scripts/source_contract_smoke.py --timeout 90

@@ -1,0 +1,13 @@
+[
+  {
+    "source_id": "quranenc-example-en",
+    "provider": "QuranEnc",
+    "translator": "Example Translator",
+    "language": "en",
+    "version": "1.0.0",
+    "source_url": "https://quranenc.com/example",
+    "retrieved_at": "2026-09-27T00:00:00Z",
+    "checksum": "sha256:example",
+    "status": "experimental"
+  }
+]

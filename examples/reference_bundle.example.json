@@ -1,0 +1,20 @@
+{
+  "ayahs": [
+    {
+      "ayah_id": "2:256",
+      "surah": 2,
+      "source_ar": "لَا إِكْرَاهَ فِي الدِّينِ",
+      "references": [
+        {
+          "provider": "QuranEnc",
+          "translator": "EXAMPLE ONLY — replace with the exact downloaded translator/publisher",
+          "version": "EXAMPLE_VERSION",
+          "text": "EXAMPLE ONLY — paste the unchanged downloaded reference text here",
+          "source_url": "https://quranenc.com/",
+          "retrieved_at": "2026-09-27T00:00:00Z",
+          "checksum": "sha256:REPLACE_WITH_REAL_CHECKSUM"
+        }
+      ]
+    }
+  ]
+}

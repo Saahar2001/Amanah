@@ -1,0 +1,5 @@
+[
+  {"id":"negation-1","trusted":"They do not transgress.","candidate":"They do transgress.","label":"NEGATION_FLIP","severity":"S3","lexical_similarity_expected":"high"},
+  {"id":"quantifier-1","trusted":"Some people know.","candidate":"All people know.","label":"QUANTIFIER_CHANGE","severity":"S3","lexical_similarity_expected":"high"},
+  {"id":"modality-1","trusted":"They may give charity.","candidate":"They must give charity.","label":"MODALITY_SHIFT","severity":"S3","lexical_similarity_expected":"high"}
+]

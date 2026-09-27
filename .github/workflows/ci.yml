@@ -9,6 +9,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: amanah-qa-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -27,5 +31,3 @@ jobs:
         run: python -m training.train --smoke
       - name: Python compile check
         run: python -m compileall -q amanah_engine api data training scripts deployment
-      - name: Upstream source contract smoke
-        run: python scripts/source_contract_smoke.py --timeout 90

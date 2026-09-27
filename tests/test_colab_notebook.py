@@ -2,11 +2,13 @@ import json
 from pathlib import Path
 
 
-def test_training_notebook_uses_generic_repository_secret_and_full_pipeline():
+def test_training_notebook_auto_resolves_repository_and_runs_full_pipeline():
     nb=json.loads(Path('notebooks/model_training_pipeline.ipynb').read_text(encoding='utf-8'))
     text='\n'.join(''.join(cell.get('source',[])) for cell in nb['cells'])
-    assert 'REPOSITORY_URL' in text
+    assert 'window.location.href' in text
+    assert '/github/([^/]+)/([^/]+)/blob/' in text
     assert 'YOUR_REPO_URL' not in text
+    assert 'REPOSITORY_URL' not in text
     assert 'fetch_verified_sources.py' in text
     assert 'source_contract_smoke.py' in text
     assert 'qa_dataset.py' in text
@@ -14,13 +16,14 @@ def test_training_notebook_uses_generic_repository_secret_and_full_pipeline():
     assert 'training.calibrate_thresholds' in text
     assert 'training.evaluate' in text
     assert 'package_hf_model.py' in text
-    assert 'HF_TOKEN' in text
     assert 'torch.cuda.is_available()' in text
-    assert 'drive.mount' in text
-    assert 'AMANAH_Artifacts' in text
+    assert 'create_inference_endpoint' in text
+    assert 'endpoint.wait' in text
+    assert 'scale_to_zero_timeout=15' in text
+    assert 'live.raise_for_status()' in text
 
 
-def test_shared_files_do_not_embed_personal_names():
+def test_shared_project_files_do_not_embed_personal_names():
     blocked_terms=['sahar','mahmoud']
     paths=[
         Path('README.md'),

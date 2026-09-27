@@ -1,0 +1,18 @@
+{
+  "ayahs": [
+    {
+      "ayah_id": "2:256",
+      "source_ar": "لَا إِكْرَاهَ فِي الدِّينِ",
+      "references_en": [
+        "EXAMPLE ONLY — insert an unchanged trusted English reference"
+      ],
+      "provenance_verified": false,
+      "source_records": [
+        {
+          "provider": "QuranEnc",
+          "status": "EXAMPLE_ONLY_REPLACE_WITH_VERIFIED_SOURCE_METADATA"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: amanah-ml-api
+    runtime: docker
+    dockerfilePath: ./deployment/Dockerfile
+    healthCheckPath: /ready
+    envVars:
+      - key: MODEL_DIR
+        value: checkpoints/amanah-drift-v0.1
+      - key: SOURCE_REGISTRY_PATH
+        value: data/reference_store.json
+      - key: AMANAH_API_TOKEN
+        sync: false

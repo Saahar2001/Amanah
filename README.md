@@ -1,145 +1,160 @@
-# AMANAH ML Engine — أمانة
+# AMANAH — Semantic Integrity Engine
 
-AMANAH is a semantic-integrity quality-assurance layer for Islamic-content translation. The v0.1 measured scope is **trusted Qur'anic Arabic → candidate English translation**.
+AMANAH is a semantic-integrity quality-assurance layer for multilingual Islamic content. The current measured model scope is Qur’anic Arabic → English translation review.
 
-The engine combines trusted-source matching, a multi-reference envelope, a fine-tuned multilingual classifier, deterministic high-precision rules, calibrated confidence thresholds, decision fusion, and human review.
+The system is designed to detect whether protected elements of meaning changed during translation, identify the drift type and severity, attach evidence, and route uncertain or high-risk cases to human review.
 
-## Processing flow
+## System Architecture
 
 ```text
-Trusted Arabic source + candidate English
-              ↓
-Canonical source / provenance match
-              ↓
-Three-reference English envelope
-              ↓
-Custom drift classifier + deterministic rules
-              ↓
-Decision fusion
-              ↓
+Trusted Arabic Source
+        +
+Candidate English Translation
+        ↓
+Canonical Source Verification
+        ↓
+Trusted Multi-Reference Envelope
+        ↓
+Custom Semantic-Drift Classifier
+        +
+Deterministic Critical Rules
+        ↓
+Decision Fusion
+        ↓
 PASS | REVIEW | CRITICAL | ABSTAIN
-              ↓
-Optional LLM explanation
-              ↓
-Human review / publication workflow
+        ↓
+Evidence + Highlighted Findings
+        ↓
+Optional Explanation Layer
+        ↓
+Human Review
 ```
 
-## Scope and safety
+## Model Scope
 
-- v0.1 is Qur'an Arabic → English only.
-- Canonical Arabic and trusted references are immutable.
-- Synthetic mutations are generated only as candidate copies.
-- Missing provenance, source mismatch, model unavailability, or low confidence fail closed to `ABSTAIN`.
-- `REVIEW`, `CRITICAL`, and `ABSTAIN` require human review.
-- The explanation layer cannot overwrite `decision`, `severity`, or `drifts`.
-- `PASS` means no material drift was detected by this analysis; it is not a religious certification.
+The v0.1 classifier is restricted to:
 
-## Source bundle
+- Qur’anic Arabic as the trusted canonical source.
+- English candidate translations.
+- Three trusted English reference translations with version and provenance tracking.
+- Active drift classes:
+  - `FAITHFUL`
+  - `NEGATION_FLIP`
+  - `OMISSION`
+  - `MODALITY_SHIFT`
+  - `QUANTIFIER_CHANGE`
+  - `CONDITION_LOSS`
 
-The source pipeline uses:
+Reserved taxonomy classes remain in the domain schema and are not presented as trained outputs until validated training data exists for them.
 
-- Tanzil Qur'an Text — Uthmani v1.1 for canonical Arabic.
-- Three QuranEnc English references discovered from the official API:
-  - Rowwad Translation Center;
-  - Noor International Center;
-  - Hilali & Khan.
+## Data Governance
 
-Versions, URLs, retrieval time, and checksums are stored at retrieval time.
+AMANAH separates source data into three immutable roles:
 
-```bash
-python scripts/fetch_verified_sources.py \
-  --output data/private/reference_bundle.json \
-  --runtime-store data/reference_store.json
-```
+- `CANONICAL`: trusted Arabic Qur’anic text.
+- `REFERENCE`: published trusted English translations.
+- `CANDIDATE`: the translation being evaluated or a clearly labeled synthetic mutation.
 
-## Dataset build and QA
+Synthetic semantic mutations are never written back to canonical or reference content.
 
-```bash
-python -m scripts.prepare_amanah_sd \
-  data/private/reference_bundle.json \
-  artifacts/amanah_sd \
-  --seed 42
+The source pipeline records source provider, translator/publisher, version, retrieval time, URL, and checksum for traceability.
 
-python scripts/qa_dataset.py \
-  --reference-bundle data/private/reference_bundle.json \
-  --split-dir artifacts/amanah_sd \
-  --output artifacts/amanah_sd/qa_report.json
-```
+## Training and Evaluation
 
-The QA gate checks canonical count, reference count, duplicate/empty source records, canonical consistency, unknown ayah IDs, zero ayah leakage across splits, and active-label coverage.
+The training pipeline implements:
 
-Active v0 labels:
+- group splitting by `ayah_id` to prevent leakage;
+- controlled semantic mutation generation;
+- mutation validation gates;
+- class-aware training;
+- validation-loss checkpoint selection;
+- gradient clipping;
+- per-label threshold calibration on validation data only;
+- frozen held-out test evaluation.
 
-`FAITHFUL`, `NEGATION_FLIP`, `OMISSION`, `MODALITY_SHIFT`, `QUANTIFIER_CHANGE`, `CONDITION_LOSS`.
+Primary evaluation priority:
 
-## Training notebook
+**Critical Drift Recall**
 
-Use:
+Supporting metrics:
 
-`notebooks/model_training_pipeline.ipynb`
+- False Safe Rate
+- Macro F1
+- per-label F1
+- Severity Macro F1
 
-Before running, add two Colab Secrets:
+No performance value is treated as valid until it is produced by the held-out evaluation pipeline.
 
-- `REPOSITORY_URL` — the Git clone URL for this repository.
-- `HF_TOKEN` — optional Hugging Face write token for private model upload.
+## Runtime Safety
 
-The notebook performs source validation, dataset QA, GPU fine-tuning, validation-only threshold calibration, frozen test evaluation, deployment packaging, local handler smoke testing, and optional Hugging Face upload.
+The runtime fails closed in the following conditions:
 
-Do not publish any model metric until `artifacts/evaluation/metrics.json` exists.
+- trusted source not found;
+- Arabic source mismatch;
+- reference provenance unavailable;
+- model unavailable;
+- insufficient confidence.
 
-## API
+These states return `ABSTAIN` and require human review.
 
-```http
-POST /v1/analyze
-Authorization: Bearer <token>
-Content-Type: application/json
-```
+A `PASS` result means that no material drift was detected by this analysis. It is not a religious certification, a fatwa, or a substitute for qualified human review.
 
-```json
-{
-  "source_type": "quran",
-  "source_ar": "...",
-  "candidate_en": "...",
-  "ayah_id": "2:256"
-}
-```
+## Deployment
 
-Readiness:
+The repository includes:
 
-```text
-GET /ready
-```
+- a custom Hugging Face inference handler;
+- FastAPI fallback service;
+- Docker and Render deployment configuration;
+- Cloudflare integration helper;
+- readiness and liveness contracts;
+- fail-closed transport behavior.
 
-This returns 503 until the trained model and reference store are both loaded.
+The platform integration keeps model outputs authoritative. The explanation layer may clarify a finding or suggest review wording, but it cannot overwrite the structured decision, severity, or detected drift labels.
 
-## Platform integration
-
-See `docs/PLATFORM_INTEGRATION_GUIDE.md`.
-
-## Quality assurance
-
-Main CI runs deterministic unit/contract checks only. Live upstream source checks are executed from the training notebook or manually, so temporary third-party network failures do not make the core build red.
-
-```bash
-pytest -q
-python -m training.train --smoke
-python -m compileall -q amanah_engine api data training scripts deployment
-git diff --check
-```
-
-See `docs/QUALITY_ASSURANCE_CHECKLIST.md`.
-
-## Repository structure
+## Repository Structure
 
 ```text
 amanah_engine/   runtime classifier, references, rules, fusion
-api/             FastAPI fallback service
+api/             FastAPI service
 data/            schemas, mutations, split and validation utilities
-training/        model, training, calibration and evaluation
-deployment/      Hugging Face handler and container fallback
-scripts/         source retrieval, dataset QA and packaging
-notebooks/       training pipeline
-examples/        benchmark examples
-tests/           unit and contract tests
-docs/            technical and delivery documentation
+training/        model, fine-tuning, calibration and evaluation
+deployment/      inference handler and container configuration
+scripts/         source retrieval, dataset QA and deployment packaging
+notebooks/       measured training and validation pipeline
+examples/        semantic perturbation benchmark examples
+tests/           unit, contract, safety and deployment validation
+docs/            architecture, QA, integration and presentation guidance
 ```
+
+## Quality Gates
+
+The main CI pipeline validates deterministic repository behavior on every update:
+
+- unit and contract tests;
+- model architecture smoke test;
+- Python compilation;
+- deployment and fail-closed contracts.
+
+External source availability, full dataset retrieval, GPU training, held-out evaluation, and production endpoint deployment are validated in their respective execution environments.
+
+## Integration Contract
+
+The model service returns a stable structured response containing:
+
+- decision;
+- integrity score;
+- severity;
+- confidence;
+- typed drift findings;
+- human-review requirement;
+- model version;
+- reference verification status.
+
+Platform integration details are documented in:
+
+`docs/PLATFORM_INTEGRATION_GUIDE.md`
+
+Presentation wording and claim boundaries are documented in:
+
+`docs/PRESENTATION_REVISION_GUIDE.md`

@@ -8,6 +8,8 @@ def test_training_notebook_runs_clean_pipeline():
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
+    assert "/zipball/" in text
+    assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
     assert "pip\", \"install\", \"-q\", \"-r\", \"requirements.txt" not in text
     assert "fetch_verified_sources.py" in text

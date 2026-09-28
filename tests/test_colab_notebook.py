@@ -8,7 +8,7 @@ def test_training_notebook_runs_clean_pipeline():
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
-    assert "NOTEBOOK_RELEASE = \"2026.09.28-r5\"" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r6\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
@@ -27,6 +27,14 @@ def test_training_notebook_runs_clean_pipeline():
     assert "sentencepiece" in text
     assert "Tokenizer preflight: PASS" in text
     assert "TRAINING STDERR" in text
+    assert "drive.mount(\"/content/drive\"" in text
+    assert "TRAINING_SIGNATURE" in text
+    assert "training_complete.json" in text
+    assert "resume_model.pt" in text
+    assert "Source cache: HIT" in text
+    assert "Dataset cache: HIT" in text
+    assert "Checkpoint cache: HIT" in text
+    assert "Evaluation cache: HIT" in text
     assert "HfApi" in text
     assert "package_ready_hf_write_token_required" in text
     assert "does not have permission to create/write this model repository" in text

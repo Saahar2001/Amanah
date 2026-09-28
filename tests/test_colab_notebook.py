@@ -3,11 +3,12 @@ from pathlib import Path
 
 
 def test_training_notebook_runs_clean_pipeline():
-    path = Path("notebooks/training_validation.ipynb")
+    path = Path("notebooks/model_release_pipeline.ipynb")
     nb = json.loads(path.read_text(encoding="utf-8"))
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r2\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text

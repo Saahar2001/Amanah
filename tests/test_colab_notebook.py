@@ -8,7 +8,7 @@ def test_training_notebook_runs_clean_pipeline():
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
-    assert "NOTEBOOK_RELEASE = \"2026.09.28-r3\"" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r4\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
@@ -24,6 +24,9 @@ def test_training_notebook_runs_clean_pipeline():
     assert "training.evaluate" in text
     assert "package_hf_model.py" in text
     assert "torch.cuda.is_available()" in text
+    assert "sentencepiece" in text
+    assert "Tokenizer preflight: PASS" in text
+    assert "TRAINING STDERR" in text
     assert "HfApi" in text
 
 

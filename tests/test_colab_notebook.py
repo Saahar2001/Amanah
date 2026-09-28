@@ -34,7 +34,7 @@ def test_shared_project_files_do_not_embed_personal_names():
         Path("docs/PRESENTATION_REVISION_GUIDE.md"),
         Path("docs/QUALITY_ASSURANCE_CHECKLIST.md"),
         Path("docs/RELEASE_VALIDATION_STATUS.md"),
-        Path("notebooks/training_validation.ipynb"),
+        Path("notebooks/model_release_pipeline.ipynb"),
     ]
     combined = "\n".join(p.read_text(encoding="utf-8").lower() for p in paths)
     for term in blocked_terms:

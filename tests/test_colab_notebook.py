@@ -3,12 +3,12 @@ from pathlib import Path
 
 
 def test_training_notebook_runs_clean_pipeline():
-    path = Path("notebooks/model_release_pipeline.ipynb")
+    path = Path("notebooks/model_training.ipynb")
     nb = json.loads(path.read_text(encoding="utf-8"))
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
-    assert "NOTEBOOK_RELEASE = \"2026.09.28-r2\"" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r3\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
@@ -35,7 +35,7 @@ def test_shared_project_files_do_not_embed_personal_names():
         Path("docs/PRESENTATION_REVISION_GUIDE.md"),
         Path("docs/QUALITY_ASSURANCE_CHECKLIST.md"),
         Path("docs/RELEASE_VALIDATION_STATUS.md"),
-        Path("notebooks/model_release_pipeline.ipynb"),
+        Path("notebooks/model_training.ipynb"),
     ]
     combined = "\n".join(p.read_text(encoding="utf-8").lower() for p in paths)
     for term in blocked_terms:

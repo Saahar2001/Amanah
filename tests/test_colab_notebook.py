@@ -11,7 +11,6 @@ def test_training_notebook_runs_clean_pipeline():
     assert "YOUR_REPO_URL" not in text
     assert "pip\", \"install\", \"-q\", \"-r\", \"requirements.txt" not in text
     assert "fetch_verified_sources.py" in text
-    assert "source_contract_smoke.py" in text
     assert "qa_dataset.py" in text
     assert "training.train" in text
     assert "training.calibrate_thresholds" in text

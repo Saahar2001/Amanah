@@ -97,8 +97,14 @@ def _save_resume_checkpoint(
         if torch.is_floating_point(tensor):
             tensor = tensor.to(torch.float16)
         state[key] = tensor
-    torch.save(state, outdir / "resume_model.pt")
-    (outdir / "resume_state.json").write_text(
+    model_path = outdir / "resume_model.pt"
+    model_temp = outdir / "resume_model.pt.tmp"
+    torch.save(state, model_temp)
+    model_temp.replace(model_path)
+
+    state_path = outdir / "resume_state.json"
+    state_temp = outdir / "resume_state.json.tmp"
+    state_temp.write_text(
         json.dumps(
             {
                 "completed_epoch": completed_epoch,
@@ -109,6 +115,7 @@ def _save_resume_checkpoint(
         ),
         encoding="utf-8",
     )
+    state_temp.replace(state_path)
 
 
 class JsonlDataset(Dataset):

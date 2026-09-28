@@ -8,7 +8,7 @@ def test_training_notebook_runs_clean_pipeline():
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
-    assert "NOTEBOOK_RELEASE = \"2026.09.28-r6\"" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r7\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
@@ -29,6 +29,7 @@ def test_training_notebook_runs_clean_pipeline():
     assert "TRAINING STDERR" in text
     assert "drive.mount(\"/content/drive\"" in text
     assert "TRAINING_SIGNATURE" in text
+    assert "MODEL_PIPELINE_VERSION = \"v0.1\"" in text
     assert "training_complete.json" in text
     assert "resume_model.pt" in text
     assert "Source cache: HIT" in text

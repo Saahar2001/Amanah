@@ -29,7 +29,7 @@ def package_hf_repo(checkpoint: str | Path, reference_store: str | Path, output_
     _copy_tree_subset(root / "amanah_engine", out / "amanah_engine", ["__init__.py","classifier.py","references.py","schemas.py","scoring.py","semantic_rules.py","service.py"])
     _copy_tree_subset(root / "training", out / "training", ["__init__.py", "modeling.py"])
     _copy_tree_subset(root / "data", out / "data", ["__init__.py", "models.py"])
-    requirements = "\n".join(["pydantic>=2.8,<3","torch>=2.3","transformers>=4.45","huggingface_hub>=0.35"]) + "\n"
+    requirements = "\n".join(["pydantic>=2.8,<3","torch>=2.3,<3","transformers>=4.45,<5","huggingface_hub>=0.35,<1","sentencepiece>=0.2,<1","protobuf>=5,<7"]) + "\n"
     (out / "requirements.txt").write_text(requirements, encoding="utf-8")
     model_card = root / "MODEL_CARD.md"
     if model_card.exists(): shutil.copy2(model_card, out / "README.md")

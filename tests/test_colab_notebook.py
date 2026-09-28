@@ -11,6 +11,9 @@ def test_training_notebook_runs_clean_pipeline():
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
+    assert "--upgrade" not in text
+    assert "setuptools" not in text
+    assert "wheel" not in text
     assert "pip\", \"install\", \"-q\", \"-r\", \"requirements.txt" not in text
     assert "fetch_verified_sources.py" in text
     assert "qa_dataset.py" in text

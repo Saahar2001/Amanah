@@ -12,7 +12,7 @@ APPROVED_ENGLISH_KEYS = (
     "english_saheeh",
     "english_hilali_khan",
 )
-QURANENC_LIST_URL = "https://quranenc.com/api/v1/translations/list/en?localization=en"
+QURANENC_LIST_URL = "https://quranenc.com/api/v1/translations/list/en/?localization=en"
 QURANENC_SURA_URL = "https://quranenc.com/api/v1/translation/sura/{key}/{sura}"
 TANZIL_DOWNLOAD_URL = "https://tanzil.net/pub/download/index.php"
 TANZIL_FORM = {
@@ -116,13 +116,56 @@ def build_reference_bundle(arabic: dict[str, str], translation_metadata: list[di
     return bundle, store
 
 
+def _build_http_session():
+    import requests
+    from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
+
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (compatible; SemanticIntegrityResearch/0.1)",
+        "Accept": "application/json,text/plain,*/*",
+    })
+    retry = Retry(
+        total=5,
+        connect=5,
+        read=5,
+        status=5,
+        backoff_factor=1.0,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset({"GET", "POST"}),
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+    return session
+
+
+def _fetch_tanzil_text(session, timeout: int) -> str:
+    errors = []
+    for method in ("get", "post"):
+        try:
+            if method == "get":
+                response = session.get(TANZIL_DOWNLOAD_URL, params=TANZIL_FORM, timeout=timeout)
+            else:
+                response = session.post(TANZIL_DOWNLOAD_URL, data=TANZIL_FORM, timeout=timeout)
+            response.raise_for_status()
+            parsed = parse_tanzil_txt2(response.text)
+            if len(parsed) == EXPECTED_AYAH_COUNT:
+                return response.text
+            errors.append(f"{method.upper()} returned {len(parsed)} parsed ayahs")
+        except Exception as exc:
+            errors.append(f"{method.upper()}: {type(exc).__name__}: {exc}")
+    raise RuntimeError("Unable to retrieve verified Tanzil text. " + " | ".join(errors))
+
+
 def fetch_verified_sources(*, timeout: int = 60, session=None) -> tuple[dict, dict]:
     if session is None:
-        import requests
-        session = requests.Session()
+        session = _build_http_session()
     retrieved_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    tanzil = session.post(TANZIL_DOWNLOAD_URL, data=TANZIL_FORM, timeout=timeout); tanzil.raise_for_status()
-    arabic = parse_tanzil_txt2(tanzil.text)
+    tanzil_text = _fetch_tanzil_text(session, timeout)
+    arabic = parse_tanzil_txt2(tanzil_text)
     if len(arabic) != EXPECTED_AYAH_COUNT:
         raise ValueError(f"Expected {EXPECTED_AYAH_COUNT} Tanzil ayahs, got {len(arabic)}")
     listing = session.get(QURANENC_LIST_URL, timeout=timeout); listing.raise_for_status()

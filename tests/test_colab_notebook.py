@@ -2,13 +2,13 @@ import json
 from pathlib import Path
 
 
-def test_training_notebook_auto_resolves_repository_and_runs_full_pipeline():
+def test_training_notebook_runs_from_github_or_drive_colab():
     nb=json.loads(Path('notebooks/model_training_pipeline.ipynb').read_text(encoding='utf-8'))
     text='\n'.join(''.join(cell.get('source',[])) for cell in nb['cells'])
     assert 'window.location.href' in text
     assert '/github/([^/]+)/([^/]+)/blob/' in text
+    assert 'https://github.com/Saahar2001/Amanah.git' in text
     assert 'YOUR_REPO_URL' not in text
-    assert 'REPOSITORY_URL' not in text
     assert 'fetch_verified_sources.py' in text
     assert 'source_contract_smoke.py' in text
     assert 'qa_dataset.py' in text

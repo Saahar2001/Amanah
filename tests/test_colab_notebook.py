@@ -8,7 +8,7 @@ def test_training_notebook_runs_clean_pipeline():
     text = "\n".join("".join(cell.get("source", [])) for cell in nb["cells"])
 
     assert "REPOSITORY_ID = 1391259908" in text
-    assert "NOTEBOOK_RELEASE = \"2026.09.28-r7\"" in text
+    assert "NOTEBOOK_RELEASE = \"2026.09.28-r8\"" in text
     assert "/zipball/" in text
     assert "git\", \"clone\"" not in text
     assert "YOUR_REPO_URL" not in text
@@ -36,6 +36,10 @@ def test_training_notebook_runs_clean_pipeline():
     assert "Dataset cache: HIT" in text
     assert "Checkpoint cache: HIT" in text
     assert "Evaluation cache: HIT" in text
+    assert "Hugging Face authentication: PASS" in text
+    assert "Hugging Face write permission: PASS" in text
+    assert "FINAL MODEL ACCEPTANCE: PASS" in text
+    assert "FINAL_ACCEPTANCE_REPORT.json" in text
     assert "HfApi" in text
     assert "package_ready_hf_write_token_required" in text
     assert "does not have permission to create/write this model repository" in text

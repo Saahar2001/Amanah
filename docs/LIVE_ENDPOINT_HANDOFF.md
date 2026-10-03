@@ -1,0 +1,181 @@
+# Live Endpoint Handoff
+
+## Status
+
+The measured AMANAH v0.1 classifier is deployed and has passed a live end-to-end smoke test.
+
+Current demo endpoint:
+
+```text
+https://6ac0b83e65c8b62f2969f1a6.endpoints.huggingface.cloud
+```
+
+Transport:
+
+```text
+hf
+```
+
+The endpoint is configured on CPU with automatic scale-to-zero. The web platform must call it from the server side only.
+
+## Required server-side secrets
+
+Configure these as Cloudflare Worker secrets or equivalent server-side environment variables:
+
+```text
+AMANAH_ML_URL=https://6ac0b83e65c8b62f2969f1a6.endpoints.huggingface.cloud
+AMANAH_ML_TOKEN=<dedicated Hugging Face token>
+```
+
+Do not expose `AMANAH_ML_TOKEN` to browser JavaScript, public repositories, logs, screenshots, or client-side environment variables.
+
+Use a dedicated fine-grained Hugging Face token for the web application when possible. It should have only the permissions required to call the Inference Endpoint.
+
+## Request contract
+
+The Hugging Face custom handler expects:
+
+```json
+{
+  "inputs": {
+    "source_type": "quran",
+    "source_ar": "trusted Arabic ayah text",
+    "candidate_en": "candidate English translation",
+    "ayah_id": "2:256"
+  }
+}
+```
+
+`ayah_id` should be provided when available.
+
+Example server-side request:
+
+```ts
+const response = await fetch(env.AMANAH_ML_URL, {
+  method: "POST",
+  headers: {
+    "content-type": "application/json",
+    "authorization": `Bearer ${env.AMANAH_ML_TOKEN}`,
+    "X-Scale-Up-Timeout": "600",
+  },
+  body: JSON.stringify({
+    inputs: {
+      source_type: "quran",
+      source_ar,
+      candidate_en,
+      ayah_id,
+    },
+  }),
+});
+
+if (!response.ok) {
+  throw new Error(`AMANAH endpoint failed: ${response.status}`);
+}
+
+const result = await response.json();
+```
+
+The project helper `integration-cloudflare.ts` already implements this flow. Use:
+
+```ts
+await analyzeAndExplain({
+  endpoint: env.AMANAH_ML_URL,
+  apiToken: env.AMANAH_ML_TOKEN,
+  payload: {
+    source_type: "quran",
+    source_ar,
+    candidate_en,
+    ayah_id,
+  },
+  transport: "hf",
+  explainWithLlama,
+});
+```
+
+## Response contract
+
+A successful response has this shape:
+
+```json
+{
+  "decision": "PASS",
+  "integrity_score": 100,
+  "severity": "S0",
+  "confidence": 0.998,
+  "drifts": [],
+  "needs_human_review": false,
+  "model_version": "repository",
+  "reference_status": "verified",
+  "notes": []
+}
+```
+
+Allowed decisions:
+
+- `PASS`
+- `REVIEW`
+- `CRITICAL`
+- `ABSTAIN`
+
+The structured model response is authoritative for decision, severity, confidence, integrity score, drift labels, and review state.
+
+The LLM layer may explain the result or assist with wording. It must not override or replace the model decision.
+
+## Recommended web workflow
+
+1. User signs in.
+2. User opens a new semantic-integrity check.
+3. Source type is fixed to Qur'an for the measured v0.1 demo.
+4. User selects or enters the ayah reference.
+5. The platform resolves the trusted Arabic source.
+6. User enters the candidate English translation.
+7. The server calls the AMANAH endpoint.
+8. The UI renders the structured result.
+9. If explanation assistance is enabled, the structured result is passed to the LLM for explanation only.
+10. The completed analysis is saved to history.
+11. `REVIEW`, `CRITICAL`, and `ABSTAIN` cases are visibly marked for human review.
+
+Do not present unsupported Hadith or other-language analysis as part of the measured v0.1 benchmark.
+
+## UI mapping
+
+| Model decision | UI treatment | Suggested wording |
+|---|---|---|
+| PASS | Green | No material semantic drift detected by this analysis |
+| REVIEW | Amber | Potential semantic drift — human review recommended |
+| CRITICAL | Red | High-impact semantic drift detected — review required |
+| ABSTAIN | Gray | Unable to verify safely — human review required |
+
+Do not describe `PASS` as a religious certification or a guarantee of correctness.
+
+## Scale-to-zero handling
+
+The endpoint scales to zero after inactivity to reduce cost. The first request after an idle period can experience a cold start.
+
+The integration helper now sends:
+
+```text
+X-Scale-Up-Timeout: 600
+```
+
+This allows the Hugging Face proxy to hold the request while the CPU replica initializes.
+
+For a judged live demo, send one warm-up request several minutes before the presentation.
+
+If the endpoint still cannot respond, the application must return `ABSTAIN` rather than falling back to an unstructured LLM verdict.
+
+## Final integration acceptance
+
+Before the presentation, verify all of these:
+
+- valid login;
+- trusted Qur'an source selection;
+- candidate English input;
+- live Hugging Face request returns HTTP 200;
+- PASS result renders correctly;
+- one known drift example renders REVIEW or CRITICAL as appropriate;
+- endpoint failure renders ABSTAIN;
+- human-review indicator appears when required;
+- LLM explanation does not change model decision;
+- analysis history saves correctly;
+- no Hugging Face token is visible in browser source or network responses generated by client-side code.

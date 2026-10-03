@@ -13,6 +13,7 @@ def test_cpu_endpoint_notebook_is_low_cost_and_no_training():
     assert "min_replica=0" in text
     assert "max_replica=1" in text
     assert "scale_to_zero_timeout=15" in text
+    assert 'type="authenticated"' in text
     assert "LIVE ENDPOINT SMOKE TEST: PASS" in text
     assert "AMANAH_ML_URL=" in text
     assert "training.train" not in text

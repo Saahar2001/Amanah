@@ -23,7 +23,7 @@ export type AmanahMLResult = {
 export async function callAmanahML(endpoint: string, apiToken: string | undefined, payload: { source_type: "quran"; source_ar: string; candidate_en: string; ayah_id?: string }): Promise<AmanahMLResult> {
   const response = await fetch(`${endpoint.replace(/\/$/, "")}/v1/analyze`, {
     method: "POST",
-    headers: {"content-type": "application/json",...(apiToken ? { authorization: `Bearer ${apiToken}` } : {})},
+    headers: {"content-type": "application/json","X-Scale-Up-Timeout": "600",...(apiToken ? { authorization: `Bearer ${apiToken}` } : {})},
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error(`AMANAH ML request failed: ${response.status}`);

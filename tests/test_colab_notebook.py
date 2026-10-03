@@ -42,7 +42,7 @@ def test_training_notebook_runs_clean_pipeline():
     assert "FINAL_ACCEPTANCE_REPORT.json" in text
     assert "HfApi" in text
     assert "package_ready_hf_write_token_required" in text
-    assert "does not have permission to create/write this model repository" in text
+    assert "authenticates but cannot create/write the model repository" in text
 
 
 def test_shared_project_files_do_not_embed_personal_names():
